@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:16.3-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: vaportrader
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    networks:
+      - vaportrader
+  
+  tsdb:
+    image: timescale/timescaledb:latest-pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: vaportrader
+    volumes:
+      - ./data/tsdb:/var/lib/postgresql/data
+    ports:
+      - 5433:5432
+    networks:
+      - vaportrader
+
+networks:
+  vaportrader:
+    driver: bridge

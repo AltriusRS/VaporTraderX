@@ -1,5 +1,7 @@
 package services
 
+import "time"
+
 type ApiItemListResponse struct {
 	Payload ApiItemList `json:"payload"`
 }
@@ -15,8 +17,8 @@ type ApiItemPartial struct {
 	Thumbnail string `json:"thumb"`
 }
 
-type ApiItemResponse struct {
-	Payload ApiItemResponseItem `json:"payload"`
+type ApiCoreResponse[T any] struct {
+	Payload T `json:"payload"`
 }
 
 type ApiItemResponseItem struct {
@@ -32,13 +34,13 @@ type ApiItem struct {
 	Tags           []string           `json:"tags"`
 	IconFormat     string             `json:"icon_format"`
 	SetRoot        bool               `json:"set_root"`
-	Ducats         int                `json:"ducats"`
-	TradingTax     int                `json:"trading_tax"`
-	MasteryLevel   int                `json:"mastery_level"`
+	Ducats         uint32             `json:"ducats"`
+	TradingTax     uint32             `json:"trading_tax"`
+	MasteryLevel   uint8              `json:"mastery_level"`
 	Vaulted        bool               `json:"vaulted"`
 	SubIcon        string             `json:"sub_icon"`
 	URLName        string             `json:"url_name"`
-	QuantityForSet int                `json:"quantity_for_set,omitempty"`
+	QuantityForSet uint8              `json:"quantity_for_set,omitempty"`
 	Icon           string             `json:"icon"`
 	Thumb          string             `json:"thumb"`
 	ID             string             `json:"id"`
@@ -58,11 +60,41 @@ type ApiItem struct {
 }
 
 type ApiItemTranslation struct {
-	ID          int    `json:"id"`
+	ID          int32  `json:"id"`
 	ItemName    string `json:"item_name"`
 	Description string `json:"description"`
 	WikiLink    string `json:"wiki_link"`
 	Icon        string `json:"icon"`
 	Thumb       string `json:"thumb"`
 	Drop        []any  `json:"drop"`
+}
+
+type ApiAchievements struct {
+	Description string `json:"description"`
+	Name        string `json:"name"`
+	Icon        string `json:"icon"`
+	Exposed     bool   `json:"exposed"`
+	Type        string `json:"type"`
+}
+
+type ApiProfile struct {
+	Reputation   int               `json:"reputation"`
+	IngameName   string            `json:"ingame_name"`
+	Achievements []ApiAchievements `json:"achievements"`
+	Platform     string            `json:"platform"`
+	Status       string            `json:"status"`
+	Region       string            `json:"region"`
+	Locale       string            `json:"locale"`
+	OwnProfile   bool              `json:"own_profile"`
+	ID           string            `json:"id"`
+	LastSeen     time.Time         `json:"last_seen"`
+	Banned       bool              `json:"banned"`
+	About        string            `json:"about"`
+	Avatar       string            `json:"avatar"`
+	Background   any               `json:"background"`
+	AboutRaw     string            `json:"about_raw"`
+}
+
+type ApiProfilePayload struct {
+	Profile ApiProfile `json:"profile"`
 }

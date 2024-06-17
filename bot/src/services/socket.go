@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"time"
+	"vaportrader/bot/src/constants"
 
 	"github.com/gorilla/websocket"
 	"github.com/teris-io/shortid"
@@ -140,7 +141,8 @@ func InitSocket() {
 				}
 
 				pm := ProcessPM(privMessage)
-				Socket.MessageHook(pm)
+				go Socket.MessageHook(pm)
+				continue
 			}
 
 			// Handle PM message delivery confirmations
@@ -172,7 +174,8 @@ func InitSocket() {
 					log.Printf("error unmarshaling message: %s", err)
 					return
 				}
-				Socket.PMHook(&nmsg.Data)
+				go Socket.PMHook(&nmsg.Data)
+				continue
 			}
 
 			// If we receive a new order, check if we have a hook for it and process accordingly
@@ -183,23 +186,27 @@ func InitSocket() {
 						log.Printf("error unmarshaling message: %s", err)
 						return
 					}
-					Socket.OrderHook(&order.Data.Order)
+					go Socket.OrderHook(&order.Data.Order)
+					continue
 				}
 			}
 
-			// Only check for new messages every 100 milliseconds
-			// This is to avoid over-utilising the thread
-			time.Sleep(time.Millisecond * 100)
+			log.Printf("unhandled message type: %s", msg.Type)
 		}
 	}()
 
 	go func() {
 		for pm := range Socket.PMQueue {
 			log.Printf("sending pm to channel %s", pm.ChatID)
-			Socket.Socket.WriteJSON(SocketMessage[*SendMessage]{
+			log.Print(pm.Message)
+			err := Socket.Socket.WriteJSON(SocketMessage[*SendMessage]{
 				Type: "@WS/chats/SEND_MESSAGE",
 				Data: pm,
 			})
+
+			if err != nil {
+				log.Printf("error sending pm: %s", err)
+			}
 		}
 	}()
 
@@ -371,7 +378,7 @@ func (m *NewMessage) Acknowledge() {
 }
 
 func (m *NewMessage) Reply(message string) (*MessageAcknowledgement, error) {
-	return Socket.SendPM(message, m.ChatID)
+	return Socket.SendPM(message+"\n\n"+constants.WFMFooter, m.ChatID)
 }
 
 type ReadMessage struct {

@@ -3,9 +3,9 @@ package services
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -42,13 +42,28 @@ func (a *APIClient) GetItem(slug string) (*ApiItemGroup, error) {
 		return nil, err
 	}
 
-	payload := ApiItemResponse{}
+	payload := ApiCoreResponse[ApiItemResponseItem]{}
 	err = a.ReadJSON(response.Body, &payload)
 	if err != nil {
 		return nil, err
 	}
 
 	return &payload.Payload.Item, nil
+}
+
+func (a *APIClient) GetUser(username string) (*ApiProfile, error) {
+	response, err := a.client.Get("https://api.warframe.market/v1/profile/" + username)
+	if err != nil {
+		return nil, err
+	}
+
+	payload := ApiCoreResponse[ApiProfilePayload]{}
+	err = a.ReadJSON(response.Body, &payload)
+	if err != nil {
+		return nil, err
+	}
+
+	return &payload.Payload.Profile, nil
 }
 
 func (a *APIClient) ReadBody(r io.Reader) ([]byte, error) {
@@ -63,12 +78,15 @@ func (a *APIClient) ReadJSON(r io.Reader, v interface{}) error {
 	return json.NewDecoder(r).Decode(v)
 }
 
-var api = NewAPIClient()
+var API = NewAPIClient()
 
 // ItemTranslationFromAPI converts an API item translation to a database item translation
-func ItemTranslationFromAPI(translation ApiItemTranslation) ItemTranslation {
+func ItemTranslationFromAPI(translation ApiItemTranslation, id string, locale string) ItemTranslation {
 	return ItemTranslation{
+		ID:          fmt.Sprintf("%s-%s", id, locale),
 		Name:        translation.ItemName,
+		Locale:      locale,
+		ItemId:      id,
 		Description: translation.Description,
 		WikiLink:    translation.WikiLink,
 		Icon:        translation.Icon,
@@ -79,23 +97,11 @@ func ItemTranslationFromAPI(translation ApiItemTranslation) ItemTranslation {
 
 // ItemFromApi converts an API item to a database item
 func ItemFromApi(item ApiItem, isSet bool, rawSetId string) Item {
-	var tags sql.NullString
-	if item.Tags == nil {
-		tags = sql.NullString{String: "", Valid: false}
-	} else {
-		tags = sql.NullString{String: strings.Join(item.Tags, ","), Valid: true}
-	}
-
 	setId := sql.NullString{String: rawSetId, Valid: isSet}
 	icon := sql.NullString{String: item.Icon, Valid: item.Icon != ""}
 	subIcon := sql.NullString{String: item.SubIcon, Valid: item.SubIcon != ""}
 	thumbnail := sql.NullString{String: item.Thumb, Valid: item.Thumb != ""}
 	iconFormat := sql.NullString{String: item.IconFormat, Valid: item.IconFormat != ""}
-	numberForSet := sql.NullInt16{Int16: int16(item.QuantityForSet), Valid: item.QuantityForSet != 0}
-	masteryLevel := sql.NullInt64{Int64: int64(item.MasteryLevel), Valid: item.MasteryLevel != 0}
-	vaulted := sql.NullBool{Bool: item.Vaulted, Valid: !item.Vaulted}
-	ducats := item.Ducats
-	tradeTax := item.TradingTax
 
 	return Item{
 		ID:           item.ID,
@@ -106,12 +112,26 @@ func ItemFromApi(item ApiItem, isSet bool, rawSetId string) Item {
 		SubIcon:      subIcon,
 		Thumbnail:    thumbnail,
 		IconFormat:   iconFormat,
-		NumberForSet: numberForSet,
-		MasteryLevel: masteryLevel,
-		Vaulted:      vaulted,
-		Ducats:       ducats,
-		TradeTax:     tradeTax,
-		Tags:         tags,
-		Translations: []ItemTranslation{ItemTranslationFromAPI(item.En), ItemTranslationFromAPI(item.Ru), ItemTranslationFromAPI(item.Ko), ItemTranslationFromAPI(item.Fr), ItemTranslationFromAPI(item.Sv), ItemTranslationFromAPI(item.De), ItemTranslationFromAPI(item.ZhHant), ItemTranslationFromAPI(item.ZhHans), ItemTranslationFromAPI(item.Pt), ItemTranslationFromAPI(item.Es), ItemTranslationFromAPI(item.Pl), ItemTranslationFromAPI(item.Cs), ItemTranslationFromAPI(item.Uk)},
+		NumberForSet: item.QuantityForSet,
+		MasteryLevel: item.MasteryLevel,
+		Vaulted:      item.Vaulted,
+		Ducats:       item.Ducats,
+		TradeTax:     item.TradingTax,
+		Tags:         item.Tags,
+		Translations: []ItemTranslation{
+			ItemTranslationFromAPI(item.En, item.ID, "en"),
+			ItemTranslationFromAPI(item.Ru, item.ID, "ru"),
+			ItemTranslationFromAPI(item.Ko, item.ID, "ko"),
+			ItemTranslationFromAPI(item.Fr, item.ID, "fr"),
+			ItemTranslationFromAPI(item.Sv, item.ID, "sv"),
+			ItemTranslationFromAPI(item.De, item.ID, "de"),
+			ItemTranslationFromAPI(item.ZhHant, item.ID, "zh-hant"),
+			ItemTranslationFromAPI(item.ZhHans, item.ID, "zh-hans"),
+			ItemTranslationFromAPI(item.Pt, item.ID, "pt"),
+			ItemTranslationFromAPI(item.Es, item.ID, "es"),
+			ItemTranslationFromAPI(item.Pl, item.ID, "pl"),
+			ItemTranslationFromAPI(item.Cs, item.ID, "cs"),
+			ItemTranslationFromAPI(item.Uk, item.ID, "uk"),
+		},
 	}
 }

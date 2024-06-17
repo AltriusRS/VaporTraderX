@@ -10,7 +10,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"go.mills.io/bitcask/v2"
-	"gorm.io/gorm"
 )
 
 type CommandHandlerMethod func(s *discordgo.Session, m *discordgo.InteractionCreate, ctx CommandContext) (bool, error)
@@ -70,34 +69,49 @@ func (c *CommandHandler) HandleCommand(s *discordgo.Session, m *discordgo.Intera
 		DUser = m.Member.User
 	}
 
-	user, err := services.DB.GetUserByID(DUser.ID)
+	var id string = "" + DUser.ID
+	var username string = "" + DUser.GlobalName
+
+	user, err := services.DB.GetUserByID(id)
 
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			user = &services.User{
-				ID:                DUser.ID,
-				Name:              DUser.GlobalName,
-				Entitlements:      services.UserEntitlement(0),
-				Locale:            sql.NullString{Valid: false},
-				WFMID:             sql.NullString{Valid: false},
-				PreferredPlatform: sql.NullString{Valid: false},
-				FirstSeen:         time.Now(),
-				LastSeen:          time.Now(),
-				UpdatedAt:         time.Now(),
-			}
+		_ = s.InteractionRespond(m.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Error whilst executing command",
+				Flags:   discordgo.MessageFlagsEphemeral,
+			},
+		})
+		log.Fatalf("Error while fetching user: %v", err)
+		return
+	} else if user.ID == "" {
+		user = &services.User{
+			ID:                id,
+			Name:              username,
+			Entitlements:      uint32(0),
+			Locale:            sql.NullString{Valid: false},
+			WfmID:             sql.NullString{Valid: false},
+			PreferredPlatform: sql.NullString{Valid: false},
+			FirstSeen:         time.Now(),
+			LastSeen:          time.Now(),
+		}
 
-			err = services.DB.Create(user)
-			if err != nil {
-				_ = s.InteractionRespond(m.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: "Error whilst executing command",
-						Flags:   discordgo.MessageFlagsEphemeral,
-					},
-				})
-				println(err)
-				return
-			}
+		if id == "" {
+			println("User ID is empty???")
+			println(DUser.ID)
+		}
+
+		err = services.DB.Create(user)
+		if err != nil {
+			_ = s.InteractionRespond(m.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "Error whilst executing command",
+					Flags:   discordgo.MessageFlagsEphemeral,
+				},
+			})
+			println(err)
+			return
 		}
 	}
 

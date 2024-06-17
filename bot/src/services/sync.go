@@ -8,8 +8,17 @@ import (
 	"gorm.io/gorm"
 )
 
+var Syncing bool = false
+
 func Sync() error {
-	apiItems, err := api.GetItems()
+
+	Syncing = true
+
+	defer func() {
+		Syncing = false
+	}()
+
+	apiItems, err := API.GetItems()
 
 	if err != nil {
 		return err
@@ -17,7 +26,7 @@ func Sync() error {
 
 	for index, apiItem := range apiItems {
 		fmt.Printf("Syncing item %d of %d - %s\n", index+1, len(apiItems), apiItem.Name)
-		manifest, err := api.GetItem(apiItem.Slug)
+		manifest, err := API.GetItem(apiItem.Slug)
 
 		if err != nil {
 			return err
@@ -38,7 +47,7 @@ func Sync() error {
 					err = DB.InsertItem(&item)
 
 					if err != nil {
-						log.Printf("Error inserting item: %s", err)
+						log.Fatalf("Error inserting item %s: %s", item.ID, err)
 					}
 				}
 			}

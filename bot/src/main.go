@@ -4,10 +4,10 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"strings"
 	"time"
 	"vaportrader/bot/src/commands"
 	"vaportrader/bot/src/services"
+	"vaportrader/bot/src/socket"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
@@ -24,35 +24,20 @@ func main() {
 		log.Fatalf("Error loading .env file: %s", err)
 	}
 
+	services.InitDatabase()
 	services.InitSocket()
+
+	socket.Load()
 
 	services.Socket.SetPMHook(func(message *services.NewMessage) {
 		log.Printf("Received PM from %s: %s", message.MessageFrom, message.RawMessage)
-		message.Acknowledge()
-
-		parts := strings.Split(message.RawMessage, " ")
-
-		if parts[0] == "!link" {
-			if len(parts) < 2 {
-				message.Reply("Please provide a valid link code")
-				return
-			}
-		}
-
-		r, err := message.Reply("Hello, I'm a bot!")
-		if err != nil {
-			log.Printf("Error sending reply: %s", err)
-			return
-		}
-		if r.Success {
-			log.Printf("Reply sent successfully")
-		} else {
-			log.Printf("Reply failed")
-		}
+		socket.CMDHandler.HandleCommand(services.Socket, message)
 	})
 
 	services.Socket.SetOrderHook(func(order *services.SubscriptionsNewOrder) {
 		log.Printf("New order: %s | %s | %d * %s @ %d platinum", order.User.GameName, order.OrderType, order.Quantity, order.Item.EN.Name, order.Price)
+
+		services.DB.InsertOrder(order)
 	})
 
 	// Create a new Discord session using the provided bot token.
@@ -97,11 +82,30 @@ func main() {
 	// more than 24 hours since last sync every 5 minutes
 	go func() {
 		for {
+
+			if services.Syncing {
+				time.Sleep(time.Second * 5)
+				continue
+			}
+
 			ls, err := services.DB.GetLastSynced()
 
 			if err != nil && err != gorm.ErrRecordNotFound {
 				log.Fatalf("Error getting last synced time: %s", err)
 			}
+
+			// if err == gorm.ErrRecordNotFound {
+			// 	log.Println("No last synced time found, syncing...")
+			// 	stateInfo := services.StateInfo{
+			// 		LastSynced: time.Now(),
+			// 	}
+
+			// 	err = services.DB.Create(&stateInfo)
+
+			// 	if err != nil {
+			// 		log.Fatalf("Error creating state info: %s", err)
+			// 	}
+			// }
 
 			// if is has been more than 24 hours since last sync
 			if ls.Add(24 * time.Hour).Before(time.Now()) {

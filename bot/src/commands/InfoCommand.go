@@ -10,7 +10,7 @@ import (
 func InfoCommand() Command {
 	return Command{
 		Name:        "info",
-		Description: "Get some basic information about the bot",
+		Description: "Get some basic information about the bot.",
 		Usage:       "info",
 		Category:    "Utility",
 		Cooldown:    5 * time.Second,

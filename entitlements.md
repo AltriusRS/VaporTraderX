@@ -6,17 +6,17 @@ Entitlements are a way to give users different permissions to the bot.
 
 Entitlements are stored as a bitfield in the database. The bitfield is a 16-bit integer, where each bit represents a different entitlement.
 
-| Bit  | Name      | Description                               |
-|------|-----------|-------------------------------------------|
-| -1   | None      | No entitlements                           |
-| 0    | Admin     | User has admin permissions                |
-| 1    | Moderator | User has moderator permissions            |
-| 2    | Developer | User has developer permissions            |
-| 3    | Premium1  | User has premium 1 entitlement            |
-| 4    | Premium2  | User has premium 2 entitlement            |
-| 5    | Premium3  | User has premium 3 entitlement            |
-| 6    | WFM Staff | This role is for staff of Warframe Market |
-| 7-15 | Reserved  | Reserved for future use                   |
+| Bit  | Value     | Name      | Description                               |
+|------|-----------|-----------|-------------------------------------------|
+| -1   | 0         | None      | No entitlements                           |
+| 0    | 1         | Admin     | User has admin permissions                |
+| 1    | 2         | Moderator | User has moderator permissions            |
+| 2    | 4         | Developer | User has developer permissions            |
+| 3    | 8         | Premium1  | User has premium 1 entitlement            |
+| 4    | 16        | Premium2  | User has premium 2 entitlement            |
+| 5    | 32        | Premium3  | User has premium 3 entitlement            |
+| 6    | 64        | WFM Staff | This role is for staff of Warframe Market |
+| 7-15 | 128-32768 | Reserved  | Reserved for future use                   |
 
 ## Entitlements
 

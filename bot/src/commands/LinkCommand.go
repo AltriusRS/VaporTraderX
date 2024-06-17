@@ -11,8 +11,8 @@ import (
 func LinkCommand() Command {
 	return Command{
 		Name:        "link",
-		Description: "Link your Warframe Market account to the bot",
-		Usage:       "link",
+		Description: "Used to link your Warframe Market account to your Discord account.",
+		Usage:       "link username: VaporTrader",
 		Category:    "Utility",
 		Cooldown:    5 * time.Second,
 		Handler:     LinkHandler,
@@ -20,7 +20,7 @@ func LinkCommand() Command {
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Name:        "username",
-				Description: "The username you of your Warframe Market account",
+				Description: "The username you of your Warframe Market account.",
 				Type:        discordgo.ApplicationCommandOptionString,
 				Required:    true,
 			},
@@ -30,43 +30,6 @@ func LinkCommand() Command {
 
 func LinkHandler(s *discordgo.Session, m *discordgo.InteractionCreate, ctx CommandContext) (bool, error) {
 
-	println("Fetching existing codes...")
-	entry := services.KV.Get(ctx.User.ID + ":totp")
-	println("Fetched existing codes...")
-
-	// The user has a code being stored in the KV
-	if entry != nil {
-		// resend the existing code
-		_ = s.InteractionRespond(m.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Embeds: []*discordgo.MessageEmbed{
-					{
-						Title: "You already have an open link request. Here's your code!",
-						Color: constants.ThemeColor,
-						Fields: []*discordgo.MessageEmbedField{
-							{
-								Name:   "Code",
-								Value:  entry.Value.(string),
-								Inline: true,
-							},
-							{
-								Name: "Expires",
-								// Show the expiry time as a relative time
-								Value: entry.Expiry.Format("in 2 minutes"),
-							},
-						},
-					},
-				},
-				Flags: discordgo.MessageFlagsEphemeral,
-			},
-		})
-
-		return true, nil
-	}
-
-	println("No existing code found, generating a new one...")
-
 	code, err := services.GenerateOTP(ctx.User.ID)
 
 	println("Generated code: " + code)
@@ -75,7 +38,9 @@ func LinkHandler(s *discordgo.Session, m *discordgo.InteractionCreate, ctx Comma
 		return false, err
 	}
 
-	entry = services.KV.Set(ctx.User.ID+":totp", code, time.Minute*15)
+	username := m.ApplicationCommandData().Options[0].StringValue()
+
+	entry := services.KV.Set(code+":totp", ctx.User.ID+"*:*"+username, time.Minute*15)
 
 	_ = s.InteractionRespond(m.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -99,7 +64,7 @@ func LinkHandler(s *discordgo.Session, m *discordgo.InteractionCreate, ctx Comma
 						},
 						{
 							Name:  "Usage",
-							Value: "```\n!link " + code + "\n```",
+							Value: "```\nlink " + code + "\n```",
 						},
 					},
 				},
@@ -113,12 +78,12 @@ func LinkHandler(s *discordgo.Session, m *discordgo.InteractionCreate, ctx Comma
 
 func LinkPermissions(s *discordgo.Session, m *discordgo.InteractionCreate, ctx CommandContext) (bool, string, error) {
 
-	if !ctx.User.WFMID.Valid {
+	if !ctx.User.WfmID.Valid {
 		return true, "", nil
 	}
 
-	if ctx.User.WFMID.Valid {
-		return false, "You already have a Warframe Market account linked to this bot", nil
+	if ctx.User.WfmID.Valid {
+		return false, "You already have a Warframe Market account linked to this bot\nIf you wish to link another account, please use `/unlink` to invalidate the linked account.", nil
 	}
 
 	return false, "This error shouldn't happen, as it indicates a corrupted database.", nil

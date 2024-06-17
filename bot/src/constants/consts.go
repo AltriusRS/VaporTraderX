@@ -12,3 +12,7 @@ const ThemeColor = 0xae6eb4
 var Footer = &discordgo.MessageEmbedFooter{
 	Text: BotName + " " + Version + " | Made with ❤️ by " + Author,
 }
+
+const WFMAuthor = "FatalCenturion"
+
+const WFMFooter = BotName + " " + Version + " | Made with ❤️ by " + WFMAuthor
