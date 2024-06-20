@@ -90,7 +90,7 @@ type ApiProfile struct {
 	LastSeen     time.Time         `json:"last_seen"`
 	Banned       bool              `json:"banned"`
 	About        string            `json:"about"`
-	Avatar       string            `json:"avatar"`
+	Avatar       *string           `json:"avatar"`
 	Background   any               `json:"background"`
 	AboutRaw     string            `json:"about_raw"`
 }

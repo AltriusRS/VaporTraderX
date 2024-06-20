@@ -123,12 +123,20 @@ type StateInfo struct {
 	gorm.Model
 	ID         uint32 `gorm:"'type:Int4' primaryKey autoIncrement"`
 	LastSynced time.Time
+	DeepSynced time.Time
 }
 
-type TradeReports struct {
-	gorm.Model
-	Hour     time.Time ``
-	Listings uint32    `gorm:"type:Int4"`
-	Buys     uint32    `gorm:"type:Int4"`
-	Sells    uint32    `gorm:"type:Int4"`
+// A struct to represent a trade stat -
+// This is only used to represent trade data in our time series db hypertable
+// We must run a seperate query to get the trade data from the table, as well as
+// turn the table into a hypertable when it is first created
+// SELECT create_hypertable('trade_infos', by_range('time'))
+// SELECT add_dimension('trade_infos', y_hash(')")
+// CREATE INDEX ON trade_infos (item_id, time DESC)
+// CREATE INDEX ON trade_infos (is_sell_order, time DESC)
+type TradeInfo struct {
+	Time        time.Time `gorm:"primaryKey"`
+	ItemId      string    `gorm:"primaryKey"`
+	Price       uint32
+	IsSellOrder bool
 }

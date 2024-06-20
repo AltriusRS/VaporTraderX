@@ -25,7 +25,7 @@ func main() {
 	}
 
 	services.InitDatabase()
-	services.InitSocket()
+	services.InitSocket(s)
 
 	socket.Load()
 
@@ -88,34 +88,48 @@ func main() {
 				continue
 			}
 
-			ls, err := services.DB.GetLastSynced()
+			ls, ds, err := services.DB.GetLastSynced()
 
 			if err != nil && err != gorm.ErrRecordNotFound {
 				log.Fatalf("Error getting last synced time: %s", err)
 			}
 
-			// if err == gorm.ErrRecordNotFound {
-			// 	log.Println("No last synced time found, syncing...")
-			// 	stateInfo := services.StateInfo{
-			// 		LastSynced: time.Now(),
-			// 	}
+			if err == gorm.ErrRecordNotFound {
+				log.Println("No last synced time found, syncing...")
+				stateInfo := services.StateInfo{
+					LastSynced: time.Now(),
+				}
 
-			// 	err = services.DB.Create(&stateInfo)
+				err = services.DB.Create(&stateInfo)
 
-			// 	if err != nil {
-			// 		log.Fatalf("Error creating state info: %s", err)
-			// 	}
-			// }
+				if err != nil {
+					log.Fatalf("Error creating state info: %s", err)
+				}
+			}
+
+			log.Printf("Time to next sync: %s", time.Until(ls.Add(24*time.Hour)))
 
 			// if is has been more than 24 hours since last sync
 			if ls.Add(24 * time.Hour).Before(time.Now()) {
-				log.Println("Syncing...")
-				err = services.Sync()
+
+				var deep bool = false
+
+				if ds.Add(7 * 24 * time.Hour).Before(time.Now()) {
+					deep = true
+				}
+
+				if deep {
+					log.Println("Deep syncing...")
+				} else {
+					log.Println("Syncing...")
+				}
+
+				err = services.Sync(deep)
 				if err != nil {
 					log.Fatalf("Error syncing: %s", err)
 				}
 			}
-			time.Sleep(time.Minute * 5)
+			time.Sleep(time.Minute * 1)
 		}
 	}()
 

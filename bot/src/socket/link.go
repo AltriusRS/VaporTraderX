@@ -2,9 +2,12 @@ package socket
 
 import (
 	"database/sql"
-	"strings"
 	"time"
+	"vaportrader/bot/src/commands"
+	"vaportrader/bot/src/constants"
 	"vaportrader/bot/src/services"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 func LinkCommand() SocketCommand {
@@ -33,40 +36,33 @@ func LinkCommandHandler(s *services.SocketClient, ctx *CommandContext) error {
 		return nil
 	}
 
-	entry := services.KV.Get(code + ":totp")
+	codeEntry := services.KV.Get(code + ":totp")
 
-	if entry != nil {
-		if entry.Expiry.Before(time.Now()) {
+	rawEntry := services.KV.Get(codeEntry.Value.(string))
+
+	if rawEntry != nil {
+		if rawEntry.Expiry.Before(time.Now()) {
 			ctx.Reply("This link has expired, please request a new one. You can do this using the `/link` interaction in Discord.")
 		} else {
-			user, err := services.DB.GetUserByID(entry.Value.(string))
+			entry := rawEntry.Value.(commands.AccountLinkStatus)
+
+			user, err := services.DB.GetUserByID(entry.ID)
 
 			if err != nil {
 				ctx.Reply("An error occured while fetching your account information. Please try again later.")
 				return err
 			}
 
-			println(entry.Value.(string))
-
-			username := strings.Split(entry.Value.(string), "*:*")[1]
-
-			profile, err := services.API.GetUser(username)
-
-			if err != nil {
-				ctx.Reply("An error occured while fetching your account information. Please try again later. Note: This is case sensetive, so please make sure you spelled the username correctly on Discord.")
-				return err
-			}
-
-			if profile.ID != ctx.Author {
-				ctx.Reply("You are not the owner of the account '" + profile.IngameName + "', please make sure that you are the owner of the account you are trying to link.")
+			if entry.Profile.ID != ctx.Author {
+				ctx.Reply("You are not the owner of the account '" + entry.Profile.IngameName + "', please make sure that you are the owner of the account you are trying to link.")
 				return nil
 			}
 
 			user.WfmID = sql.NullString{String: ctx.Author, Valid: true}
-			user.WfmUsername = sql.NullString{String: username, Valid: true}
-			user.Locale = sql.NullString{String: profile.Locale, Valid: true}
-			user.PreferredPlatform = sql.NullString{String: profile.Platform, Valid: true}
-			user.LastSeen = profile.LastSeen
+			user.WfmUsername = sql.NullString{String: entry.Profile.IngameName, Valid: true}
+			user.Locale = sql.NullString{String: entry.Profile.Locale, Valid: true}
+			user.PreferredPlatform = sql.NullString{String: entry.Profile.Platform, Valid: true}
+			user.LastSeen = entry.Profile.LastSeen
 			user.Awards = append(user.Awards, services.Award{
 				BadgeId: 4,
 				UserId:  user.ID,
@@ -76,10 +72,80 @@ func LinkCommandHandler(s *services.SocketClient, ctx *CommandContext) error {
 
 			if err != nil {
 				ctx.Reply("An error occured while saving your account information. Please try again later.")
+
+				s.Session.InteractionResponseEdit(entry.Interaction, &discordgo.WebhookEdit{
+					Embeds: &[]*discordgo.MessageEmbed{
+						{
+							Title:       "An error occured while saving your account information.",
+							Description: "Please try again later.",
+							Color:       constants.ThemeColor,
+							Fields: []*discordgo.MessageEmbedField{
+								{
+									Name:   "Error",
+									Value:  err.Error(),
+									Inline: true,
+								},
+							},
+						},
+					},
+				})
+
 				return err
 			}
 
-			ctx.Reply("Congratulations, you have successfully linked your Warframe Market account to your Discord profile!")
+			ctx.Reply("Congratulations, " + entry.Interaction.ID + ", you have successfully linked your Warframe Market account to your Discord profile!")
+
+			// var banText string = "No"
+
+			// if entry.Profile.Banned {
+			// 	banText = "Yes"
+			// }
+
+			// thumbnail := &discordgo.MessageEmbedThumbnail{}
+
+			// if entry.Profile.Avatar != nil {
+			// 	thumbnail = &discordgo.MessageEmbedThumbnail{
+			// 		URL: "https://warframe.market/static/assets/" + *entry.Profile.Avatar,
+			// 	}
+			// }
+
+			// channel, err := s.Session.UserChannelCreate(entry.ID)
+
+			// if err != nil {
+			// 	return err
+			// }
+
+			// s.Session.ChannelMessageSendComplex(channel.ID, &discordgo.MessageSend{
+			// 	Embeds: []*discordgo.MessageEmbed{
+			// 		{
+			// 			Title:       "Congratulations!",
+			// 			Description: "You have successfully linked your Warframe Market account to your Discord profile!",
+			// 			Color:       constants.ThemeColor,
+			// 			Fields: []*discordgo.MessageEmbedField{
+			// 				{
+			// 					Name:   "Username",
+			// 					Value:  entry.Profile.IngameName,
+			// 					Inline: true,
+			// 				},
+			// 				{
+			// 					Name:   "Status",
+			// 					Value:  fmt.Sprintf("**%s**", entry.Profile.Status),
+			// 					Inline: true,
+			// 				},
+			// 				{
+			// 					Name:   "Banned",
+			// 					Value:  banText,
+			// 					Inline: true,
+			// 				},
+			// 			},
+			// 			Thumbnail: thumbnail,
+			// 		},
+			// 	},
+			// 	Flags: discordgo.MessageFlagsEphemeral,
+			// })
+
+			services.KV.Delete(entry.Code + ":totp")
+			services.KV.Delete(codeEntry.Value.(string))
 		}
 	} else {
 		ctx.Reply("This link does not exist, please request a new one. You can do this using the `/link` interaction in Discord.")
