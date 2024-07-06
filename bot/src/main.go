@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
 	"log"
 	"os"
 	"os/signal"
@@ -26,6 +28,17 @@ func main() {
 
 	services.InitDatabase()
 	services.InitSocket(s)
+	services.InitI18n()
+
+	lm, err := json.Marshal(services.LanguageManager)
+
+	print(string(lm))
+
+	println(services.LanguageManager.Get(nil, "constants.wfm.footer", &map[string]interface{}{
+		"maintainer": "Altrius",
+	}))
+
+	os.Exit(0)
 
 	socket.Load()
 
@@ -37,7 +50,11 @@ func main() {
 	services.Socket.SetOrderHook(func(order *services.SubscriptionsNewOrder) {
 		log.Printf("New order: %s | %s | %d * %s @ %d platinum", order.User.GameName, order.OrderType, order.Quantity, order.Item.EN.Name, order.Price)
 
-		services.DB.InsertOrder(order)
+		err := services.DB.InsertOrder(order)
+		if err != nil {
+			log.Printf("Error inserting order: %s", err)
+			return
+		}
 	})
 
 	// Create a new Discord session using the provided bot token.
@@ -49,7 +66,7 @@ func main() {
 
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		log.Printf("Logged in as: %v#%v", s.State.User.Username, s.State.User.Discriminator)
-		s.UpdateStatusComplex(discordgo.UpdateStatusData{
+		_ = s.UpdateStatusComplex(discordgo.UpdateStatusData{
 			Activities: []*discordgo.Activity{
 				{
 					Name:  "Warframe",
@@ -60,6 +77,10 @@ func main() {
 			AFK:    false,
 			Status: "online",
 		})
+	})
+
+	s.AddHandler(func(s *discordgo.Session, r *discordgo.PresenceUpdate) {
+		log.Printf("Presence update: %v - %v - %v", r.User.Username, r.Status, r.Presence.Activities[0])
 	})
 
 	s.Identify.Intents = discordgo.IntentsGuildPresences
@@ -76,7 +97,12 @@ func main() {
 		commands.CMDHandler.HandleCommand(s, i)
 	})
 
-	defer s.Close()
+	defer func(s *discordgo.Session) {
+		err := s.Close()
+		if err != nil {
+			log.Fatalf("Error closing Discord session: %s", err)
+		}
+	}(s)
 
 	// Sync the item list every day, but check if it's been
 	// more than 24 hours since last sync every 5 minutes
@@ -90,11 +116,11 @@ func main() {
 
 			ls, ds, err := services.DB.GetLastSynced()
 
-			if err != nil && err != gorm.ErrRecordNotFound {
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 				log.Fatalf("Error getting last synced time: %s", err)
 			}
 
-			if err == gorm.ErrRecordNotFound {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
 				log.Println("No last synced time found, syncing...")
 				stateInfo := services.StateInfo{
 					LastSynced: time.Now(),
@@ -109,10 +135,10 @@ func main() {
 
 			log.Printf("Time to next sync: %s", time.Until(ls.Add(24*time.Hour)))
 
-			// if is has been more than 24 hours since last sync
+			// if it has been more than 24 hours since last sync
 			if ls.Add(24 * time.Hour).Before(time.Now()) {
 
-				var deep bool = false
+				var deep = false
 
 				if ds.Add(7 * 24 * time.Hour).Before(time.Now()) {
 					deep = true

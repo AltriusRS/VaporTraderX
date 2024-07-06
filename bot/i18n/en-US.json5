@@ -1,0 +1,97 @@
+/* ================================================================================
+   Language file for VaporTrader
+   This is a translation language file for VaporTrader which is used to provide language localization.
+   The language file is written in JSON5 format.
+
+   For more information on JSON5, see https://json5.org/
+
+   To add a new language, copy this file, rename it to the language you want to add, and translate the contents.
+   DO NOT change anything which is on the left side of the colon (:) character as this will break the language file.
+
+   Anything on the right side of the colon (:) character is the value of the key.
+   Anything wrapped in percentage signs is a parameter and should not be translated.
+
+   For example, the following line:
+   "constants.bot.footer": "Made with ❤️ by %Maintainer%",
+
+   In German would be translated as:
+   "constants.bot.footer": "Mit ❤️ erstellt von %Maintainer%",
+   ================================================================================ */
+{
+  // The ISO 639 code of this translation
+  // See https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes
+  // See also https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
+  // We use Alpha-2 codes, followed by the addition of a hyphen as
+  // well as the ISO 3166-1 alpha-2 code, e.g. "en-US"
+  // Note: that the country code is case-sensitive.
+  "meta.iso": "en-US",
+
+  // The name of this translation.
+  "meta.name": "English",
+
+  // The maintainer of this translation.
+  "meta.maintainer": "Altrius",
+
+  // ================================================================================
+
+  // Time units for the regional info
+  "units.time.second": "second",
+  "units.time.seconds": "seconds",
+  "units.time.minute": "minute",
+  "units.time.minutes": "minutes",
+  "units.time.hour": "hour",
+  "units.time.hours": "hours",
+  "units.time.day": "day",
+  "units.time.days": "days",
+  "units.time.week": "week",
+  "units.time.weeks": "weeks",
+  "units.time.month": "month",
+  "units.time.months": "months",
+  "units.time.year": "year",
+  "units.time.years": "years",
+
+  // ================================================================================
+
+  // Distance units for the regional info
+  "units.distance.name.meter": "meter",
+  "units.distance.multiplier.meter":  1,
+
+  "units.distance.name.centimeter": "centimeter",
+  "units.distance.multiplier.centimeter":  100,
+
+  "units.distance.name.millimeter": "millimeter",
+  "units.distance.multiplier.millimeter":  1000,
+
+  // ================================================================================
+
+  //  Errors
+  "commands.handler.errors.perms.unauthorized": "You do not have permission to use this action.\nReason: '%Reason%'",
+  "commands.handler.errors.perms.failed": "An error occurred while checking permissions for this action.\nError: '%Error%'",
+  "commands.handler.errors.generic.failed": "An error occurred while executing this action.\nError: '%Error%'",
+
+  // ================================================================================
+
+  // The footer for all embeds in the bot.
+  "constants.bot.footer": "Made with ❤️ by %Maintainer%",
+
+  // The footer for all replies from the bot on Warframe Market.
+  "constants.wfm.footer": "%BotName% %Version% | Made with ❤️ by %Maintainer%",
+
+  // ================================================================================
+
+  // Commands
+  "commands.wfm.help.name": "help",
+  "commands.wfm.help.description": "Shows a list of actions or help for a specific action",
+  "commands.wfm.help.usage": "%CommandName% [action]",
+  "commands.wfm.help.aliases": ["commands"],
+
+  "commands.wfm.link.name": "link",
+  "commands.wfm.link.description": "Used to link your Warframe Market account to your Discord account.",
+  "commands.wfm.link.usage": "%CommandName% [code]",
+  "commands.wfm.link.aliases": ["connect"],
+  "commands.wfm.link.dialog.invalid_code": "Please provide a valid code.",
+  "commands.wfm.link.dialog.expired_code": "This link has expired, please request a new one. You can do this using the `%CommandName%` interaction in Discord.",
+  "commands.wfm.link.dialog.not_owner": "You are not the owner of the account '%AccountName%', please make sure that you are the owner of the account you are trying to link.",
+  "commands.wfm.link.dialog.success": "Congratulations, %UserName%, you have successfully linked your Warframe Market account to your Discord profile!",
+  "commands.wfm.link.dialog.error": "An error occurred while saving your account information. Please try again later.",
+}

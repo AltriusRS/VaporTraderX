@@ -2,6 +2,7 @@ package commands
 
 import (
 	"database/sql"
+	"go.mills.io/bitcask/v2"
 	"log"
 	"os"
 	"strings"

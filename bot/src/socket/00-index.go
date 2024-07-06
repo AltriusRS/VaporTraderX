@@ -1,7 +1,6 @@
 package socket
 
 import (
-	"fmt"
 	"strings"
 	"vaportrader/src/services"
 )
@@ -89,19 +88,25 @@ func (c *SocketCommandHandler) HandleCommand(s *services.SocketClient, msg *serv
 	permitted, reason, err := cmd.Permissions(s, ctx)
 
 	if err != nil {
-		msg.Reply(fmt.Sprintf("An error occured while checking permissions for this action.\nError: '%s'", err.Error()))
+		_, _ = msg.Reply(services.LanguageManager.Get(&ctx.User.Locale.String, "commands.handler.errors.perms.failed", &map[string]interface{}{
+			"Error": err.Error(),
+		}))
 		return
 	}
 
 	if !permitted {
-		msg.Reply(fmt.Sprintf("You do not have permission to use this action.\nReason: '%s'", reason))
+		_, _ = msg.Reply(services.LanguageManager.Get(&ctx.User.Locale.String, "commands.handler.errors.perms.unauthorized", &map[string]interface{}{
+			"Reason": reason,
+		}))
 		return
 	}
 
 	err = cmd.Handler(s, ctx)
 
 	if err != nil {
-		msg.Reply(fmt.Sprintf("An error occured while executing this action.\nError: '%s'", err.Error()))
+		_, _ = msg.Reply(services.LanguageManager.Get(&ctx.User.Locale.String, "commands.handler.errors.generic.failed", &map[string]interface{}{
+			"Error": err.Error(),
+		}))
 		return
 	}
 }

@@ -7,9 +7,9 @@ import (
 
 func HelpCommand() SocketCommand {
 	return SocketCommand{
-		Name:        "help",
-		Description: "Shows a list of actions or help for a specific action",
-		Usage:       "help [action]",
+		Name:        services.LanguageManager.Get(nil, "commands.wfm.help.name", nil),
+		Description: services.LanguageManager.Get(nil, "commands.wfm.help.description", nil),
+		Usage:       services.LanguageManager.Get(nil, "commands.wfm.help.usage", nil),
 		Category:    "General",
 		Cooldown:    5,
 		Aliases:     []string{"commands"},

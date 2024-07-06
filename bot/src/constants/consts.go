@@ -13,6 +13,6 @@ var Footer = &discordgo.MessageEmbedFooter{
 	Text: BotName + " " + Version + " | Made with ❤️ by " + Author,
 }
 
-const WFMAuthor = "FatalCenturion"
+const WFMAuthor = "AltriusRS"
 
 const WFMFooter = BotName + " " + Version + " | Made with ❤️ by " + WFMAuthor
