@@ -3,8 +3,8 @@ package commands
 import (
 	"fmt"
 	"time"
-	"vaportrader/bot/src/constants"
-	"vaportrader/bot/src/services"
+	"vaportrader/src/constants"
+	"vaportrader/src/services"
 
 	"github.com/bwmarrin/discordgo"
 )

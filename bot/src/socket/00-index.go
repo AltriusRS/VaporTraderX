@@ -3,7 +3,7 @@ package socket
 import (
 	"fmt"
 	"strings"
-	"vaportrader/bot/src/services"
+	"vaportrader/src/services"
 )
 
 type SocketCommand struct {

@@ -2,7 +2,7 @@ package commands
 
 import (
 	"time"
-	"vaportrader/bot/src/constants"
+	"vaportrader/src/constants"
 
 	"github.com/bwmarrin/discordgo"
 )

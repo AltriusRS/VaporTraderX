@@ -3,9 +3,9 @@ package socket
 import (
 	"database/sql"
 	"time"
-	"vaportrader/bot/src/commands"
-	"vaportrader/bot/src/constants"
-	"vaportrader/bot/src/services"
+	"vaportrader/src/commands"
+	"vaportrader/src/constants"
+	"vaportrader/src/services"
 
 	"github.com/bwmarrin/discordgo"
 )

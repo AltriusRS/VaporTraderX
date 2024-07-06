@@ -5,9 +5,9 @@ import (
 	"os"
 	"os/signal"
 	"time"
-	"vaportrader/bot/src/commands"
-	"vaportrader/bot/src/services"
-	"vaportrader/bot/src/socket"
+	"vaportrader/src/commands"
+	"vaportrader/src/services"
+	"vaportrader/src/socket"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
@@ -18,7 +18,7 @@ var s *discordgo.Session
 
 func main() {
 	// Find .env file
-	err := godotenv.Load(".env")
+	err := godotenv.Load(".dev.env")
 
 	if err != nil {
 		log.Fatalf("Error loading .env file: %s", err)

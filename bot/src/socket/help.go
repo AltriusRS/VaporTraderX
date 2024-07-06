@@ -2,7 +2,7 @@ package socket
 
 import (
 	"fmt"
-	"vaportrader/bot/src/services"
+	"vaportrader/src/services"
 )
 
 func HelpCommand() SocketCommand {

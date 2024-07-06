@@ -1,4 +1,4 @@
-module vaportrader/bot
+module vaportrader
 
 go 1.22.3
 

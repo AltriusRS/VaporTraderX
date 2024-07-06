@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"os"
 	"time"
-	"vaportrader/bot/src/constants"
+	"vaportrader/src/constants"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/gorilla/websocket"
